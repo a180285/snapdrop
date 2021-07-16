@@ -263,12 +263,15 @@ class RTCPeer extends Peer {
 
     _onDescription(description) {
         // description.sdp = description.sdp.replace('b=AS:30', 'b=AS:1638400');
+        console.log('RTC: _onDescription: ', description);
+
         this._conn.setLocalDescription(description)
             .then(_ => this._sendSignal({ sdp: description }))
             .catch(e => this._onError(e));
     }
 
     _onIceCandidate(event) {
+        console.log("_onIceCandidate: ", event);
         if (!event.candidate) return;
         this._sendSignal({ ice: event.candidate });
     }
@@ -277,15 +280,20 @@ class RTCPeer extends Peer {
         if (!this._conn) this._connect(message.sender, false);
 
         if (message.sdp) {
+            console.log("Get server, sdp: ", message.sdp)
+
             this._conn.setRemoteDescription(new RTCSessionDescription(message.sdp))
                 .then( _ => {
                     if (message.sdp.type === 'offer') {
+                        console.log("Get offer, sdp: ", message.sdp)
                         return this._conn.createAnswer()
                             .then(d => this._onDescription(d));
                     }
                 })
                 .catch(e => this._onError(e));
         } else if (message.ice) {
+            console.log("Get server, ice: ", message.ice)
+
             this._conn.addIceCandidate(new RTCIceCandidate(message.ice));
         }
     }
@@ -512,8 +520,10 @@ class Events {
 
 
 RTCPeer.config = {
-    'sdpSemantics': 'unified-plan',
     'iceServers': [{
-        urls: 'stun:stun.l.google.com:19302'
+        'urls': [
+            'stun:121.36.134.96:20020',
+            'stun:121.36.134.96:20021',
+        ]
     }]
 }
